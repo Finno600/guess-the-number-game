@@ -1,12 +1,13 @@
 const express = require('express');
 const mongoose = require('mongoose');
+require('dotenv').config();
 const app = express();
 const port = 3000;
 
 const Score = require('./models/Score');
 
-// Connect to MongoDB Atlas (replace with your connection string)
-mongoose.connect('mongodb+srv://<username>:<password>@cluster0.xxxxx.mongodb.net/guessgame?retryWrites=true&w=majority', {
+// Connect to MongoDB Atlas
+mongoose.connect(process.env.MONGODB_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true
 }).then(() => console.log('Connected to MongoDB Atlas'))
