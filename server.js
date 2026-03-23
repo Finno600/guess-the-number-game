@@ -7,11 +7,9 @@ const port = 3000;
 const Score = require('./models/Score');
 
 // Connect to MongoDB Atlas
-mongoose.connect(process.env.MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-}).then(() => console.log('Connected to MongoDB Atlas'))
-  .catch(err => console.error('MongoDB connection error:', err));
+mongoose.connect(process.env.MONGODB_URI)
+.then(() => console.log('Connected to MongoDB Atlas'))
+.catch(err => console.error('MongoDB connection error:', err));
 
 // Set up EJS as the view engine
 app.set('view engine', 'ejs');
@@ -51,6 +49,9 @@ app.post('/game', async (req, res) => {
     const numGuess = parseInt(guess);
     const numTarget = parseInt(targetNumber);
     const gameConfig = gameModes[mode];
+
+    // Debug logging
+    console.log(`Guess: ${numGuess}, Target: ${numTarget}, Mode: ${mode}`);
 
     if (numGuess < numTarget) {
         message = 'Too low! Try again.';
