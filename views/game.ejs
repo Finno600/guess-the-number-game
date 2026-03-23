@@ -8,7 +8,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>Guess the Number (1-100)</h1>
+        <h1>Guess the Number (<%= gameConfig.name %>)</h1>
         <p>Attempts: <%= attempts %></p>
         <% if (message) { %>
             <p class="message"><%= message %></p>
@@ -17,14 +17,15 @@
             <form action="/game" method="POST">
                 <input type="hidden" name="targetNumber" value="<%= targetNumber %>">
                 <input type="hidden" name="attempts" value="<%= attempts %>">
+                <input type="hidden" name="mode" value="<%= mode %>">
                 <label for="name">Your Name (optional):</label>
                 <input type="text" id="name" name="name" placeholder="Enter your name">
-                <label for="guess">Your Guess:</label>
-                <input type="number" id="guess" name="guess" min="1" max="100" required>
+                <label for="guess">Your Guess (<%= gameConfig.min %>-<%= gameConfig.max %>):</label>
+                <input type="number" id="guess" name="guess" min="<%= gameConfig.min %>" max="<%= gameConfig.max %>" required>
                 <button type="submit" class="btn">Guess</button>
             </form>
         <% } else { %>
-            <a href="/game" class="btn">Play Again</a>
+            <a href="/game?mode=<%= mode %>" class="btn">Play Again</a>
             <a href="/leaderboard" class="btn">View Leaderboard</a>
         <% } %>
         <a href="/" class="btn">Home</a>

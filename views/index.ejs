@@ -9,8 +9,12 @@
 <body>
     <div class="container">
         <h1>Welcome to Guess the Number!</h1>
-        <p>Try to guess a number between 1 and 100 in as few attempts as possible.</p>
-        <a href="/game" class="btn">Start Game</a>
+        <p>Choose your difficulty level and try to guess the number in as few attempts as possible.</p>
+        <div class="modes">
+            <% Object.keys(gameModes).forEach(mode => { %>
+                <a href="/game?mode=<%= mode %>" class="btn mode-btn"><%= gameModes[mode].name %></a>
+            <% }); %>
+        </div>
         <a href="/leaderboard" class="btn">View Leaderboard</a>
     </div>
 </body>

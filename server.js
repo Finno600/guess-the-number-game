@@ -1,6 +1,16 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const app = express();
 const port = 3000;
+
+const Score = require('./models/Score');
+
+// Connect to MongoDB
+mongoose.connect('mongodb://localhost:27017/guessgame', {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+}).then(() => console.log('Connected to MongoDB'))
+  .catch(err => console.error('MongoDB connection error:', err));
 
 // Set up EJS as the view engine
 app.set('view engine', 'ejs');
@@ -10,26 +20,36 @@ app.set('views', './views');
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 
-// In-memory storage for leaderboard (in production, use a database)
-let leaderboard = [];
+// Game modes configuration
+const gameModes = {
+    easy: { min: 1, max: 50, name: 'Easy (1-50)' },
+    medium: { min: 1, max: 100, name: 'Medium (1-100)' },
+    hard: { min: 1, max: 500, name: 'Hard (1-500)' }
+};
 
 // Routes
 app.get('/', (req, res) => {
-    res.render('index');
+    res.render('index', { gameModes });
 });
 
 app.get('/game', (req, res) => {
-    // Generate a random number between 1 and 100
-    const targetNumber = Math.floor(Math.random() * 100) + 1;
-    res.render('game', { targetNumber, attempts: 0, message: '' });
+    const mode = req.query.mode || 'medium';
+    const gameConfig = gameModes[mode];
+    if (!gameConfig) {
+        return res.redirect('/');
+    }
+    // Generate a random number based on mode
+    const targetNumber = Math.floor(Math.random() * (gameConfig.max - gameConfig.min + 1)) + gameConfig.min;
+    res.render('game', { targetNumber, attempts: 0, message: '', mode, gameConfig });
 });
 
-app.post('/game', (req, res) => {
-    const { guess, targetNumber, attempts } = req.body;
+app.post('/game', async (req, res) => {
+    const { guess, targetNumber, attempts, mode } = req.body;
     let message = '';
     let newAttempts = parseInt(attempts) + 1;
     const numGuess = parseInt(guess);
     const numTarget = parseInt(targetNumber);
+    const gameConfig = gameModes[mode];
 
     if (numGuess < numTarget) {
         message = 'Too low! Try again.';
@@ -37,20 +57,31 @@ app.post('/game', (req, res) => {
         message = 'Too high! Try again.';
     } else {
         message = `Congratulations! You guessed it in ${newAttempts} attempts.`;
-        // Add to leaderboard
-        leaderboard.push({ name: req.body.name || 'Anonymous', attempts: newAttempts, date: new Date() });
-        // Sort leaderboard by attempts (lower is better)
-        leaderboard.sort((a, b) => a.attempts - b.attempts);
-        // Keep only top 10
-        leaderboard = leaderboard.slice(0, 10);
-        return res.render('game', { targetNumber: numTarget, attempts: newAttempts, message, guessed: true });
+        // Save to database
+        try {
+            const score = new Score({
+                name: req.body.name || 'Anonymous',
+                attempts: newAttempts,
+                gameMode: mode
+            });
+            await score.save();
+        } catch (err) {
+            console.error('Error saving score:', err);
+        }
+        return res.render('game', { targetNumber: numTarget, attempts: newAttempts, message, guessed: true, mode, gameConfig });
     }
 
-    res.render('game', { targetNumber: numTarget, attempts: newAttempts, message });
+    res.render('game', { targetNumber: numTarget, attempts: newAttempts, message, mode, gameConfig });
 });
 
-app.get('/leaderboard', (req, res) => {
-    res.render('leaderboard', { leaderboard });
+app.get('/leaderboard', async (req, res) => {
+    try {
+        const scores = await Score.find().sort({ attempts: 1 }).limit(50);
+        res.render('leaderboard', { scores, gameModes });
+    } catch (err) {
+        console.error('Error fetching leaderboard:', err);
+        res.render('leaderboard', { scores: [], gameModes });
+    }
 });
 
 app.listen(port, () => {
