@@ -5,11 +5,11 @@ const port = 3000;
 
 const Score = require('./models/Score');
 
-// Connect to MongoDB
-mongoose.connect('mongodb://localhost:27017/guessgame', {
+// Connect to MongoDB Atlas (replace with your connection string)
+mongoose.connect('mongodb+srv://<username>:<password>@cluster0.xxxxx.mongodb.net/guessgame?retryWrites=true&w=majority', {
     useNewUrlParser: true,
     useUnifiedTopology: true
-}).then(() => console.log('Connected to MongoDB'))
+}).then(() => console.log('Connected to MongoDB Atlas'))
   .catch(err => console.error('MongoDB connection error:', err));
 
 // Set up EJS as the view engine
